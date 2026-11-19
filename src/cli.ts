@@ -8,6 +8,8 @@ import { formatInitReport, runInit } from "./commands/init.js";
 import { formatSaveResult, formatSnapshot, runSave } from "./commands/save.js";
 import { exitCodeFor, formatCheckReport, runCheck } from "./commands/check.js";
 import { formatConfirm, formatStatus, runConfirm, runStatus } from "./commands/status.js";
+import { findRepoRoot } from "./core/git.js";
+import { startMcpServer } from "./mcp/server.js";
 
 const program = new Command();
 
@@ -77,7 +79,16 @@ program
     console.log(formatConfirm(await runConfirm(process.cwd(), ref)));
   });
 
-// The `mcp` command will be added here in Step 10.
+program
+  .command("mcp")
+  .description("start the MCP server (your AI assistant runs this for you)")
+  .option("--root <folder>", "the project folder (default: the current folder)")
+  .action(async (flags: { root?: string }) => {
+    // Nothing may be printed to stdout here: it carries the messages to the AI app.
+    const root = await findRepoRoot(flags.root ?? process.cwd());
+    if (!root) throw new Error(`${flags.root ?? process.cwd()} is not inside a git repository.`);
+    await startMcpServer(root);
+  });
 
 // Run the command. Expected problems (like "not a git repository") are shown
 // as a short message instead of a scary stack trace.

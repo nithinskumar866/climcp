@@ -38,6 +38,38 @@ export async function findNote(root: string, ref: string): Promise<Note> {
   );
 }
 
+export interface SearchOptions {
+  kinds?: NoteKind[];
+  /** Also search notes whose status is "done" or "outdated". Default: only active notes. */
+  includeInactive?: boolean;
+  limit?: number;
+}
+
+/**
+ * Simple word search: a note matches if EVERY word of the query appears in its
+ * title, body or related files (ignoring upper/lower case). Title matches rank higher.
+ * An empty query returns the newest notes.
+ */
+export async function searchNotes(root: string, query: string, opts: SearchOptions = {}): Promise<Note[]> {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const notes = (await allNotes(root, opts.kinds)).filter((n) => opts.includeInactive || n.meta.status === "active");
+
+  const scored = notes
+    .map((note, index) => {
+      const title = note.meta.title.toLowerCase();
+      const text = `${title}\n${note.body}\n${note.meta.related_files.join("\n")}`.toLowerCase();
+      if (!words.every((w) => text.includes(w))) return null;
+      // 3 points for a word in the title, plus 1 per time it appears anywhere.
+      const score = words.reduce((s, w) => s + (title.includes(w) ? 3 : 0) + text.split(w).length - 1, 0);
+      return { note, score, index };
+    })
+    .filter((x): x is { note: Note; score: number; index: number } => x !== null);
+
+  // Best score first; on a tie, keep newest first.
+  scored.sort((a, b) => b.score - a.score || a.index - b.index);
+  return scored.slice(0, opts.limit ?? 10).map((x) => x.note);
+}
+
 /** The text under one "## Heading" of a note body ("" if missing or not filled in). */
 export function getSection(body: string, heading: string): string {
   const lines = body.split(/\r?\n/);

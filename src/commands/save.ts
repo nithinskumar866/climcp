@@ -92,11 +92,28 @@ export function relatedFiles(git: GitSnapshot): string[] {
 }
 
 export function buildHandoff(git: GitSnapshot, answers: Answers): { title: string; body: string; related_files: string[] } {
-  const filesChanged =
-    git.changes.length > 0
-      ? git.changes.map((c) => `- \`${c.path}\` (${c.kind}${c.staged ? ", staged" : ""})`).join("\n")
-      : "No uncommitted changes.";
+  return {
+    title: answers.title,
+    related_files: relatedFiles(git),
+    body: handoffBody({
+      "What's done": answers.done,
+      "Current state": gitStateText(git),
+      "Files changed": filesChangedText(git),
+      "Next step": answers.next,
+      "Risks and warnings": answers.risks,
+    }),
+  };
+}
 
+/** The "Files changed" section, written from git. (Also used by the MCP write_handoff tool.) */
+export function filesChangedText(git: GitSnapshot): string {
+  return git.changes.length > 0
+    ? git.changes.map((c) => `- \`${c.path}\` (${c.kind}${c.staged ? ", staged" : ""})`).join("\n")
+    : "No uncommitted changes.";
+}
+
+/** The "Current state" section, written from git. (Also used by the MCP write_handoff tool.) */
+export function gitStateText(git: GitSnapshot): string {
   const state = [
     `- Branch: \`${git.branch ?? "(detached)"}\``,
     `- Latest commit: ${git.head ? `\`${git.head}\`${git.commits[0] ? ` ${git.commits[0].subject}` : ""}` : "none yet"}`,
@@ -105,18 +122,7 @@ export function buildHandoff(git: GitSnapshot, answers: Answers): { title: strin
   if (git.commits.length > 0) {
     state.push("", "Recent commits:", ...git.commits.map((c) => `- \`${c.hash}\` ${c.date} ${c.subject} (${c.author})`));
   }
-
-  return {
-    title: answers.title,
-    related_files: relatedFiles(git),
-    body: handoffBody({
-      "What's done": answers.done,
-      "Current state": state.join("\n"),
-      "Files changed": filesChanged,
-      "Next step": answers.next,
-      "Risks and warnings": answers.risks,
-    }),
-  };
+  return state.join("\n");
 }
 
 // ---------- putting it together ----------

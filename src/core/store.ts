@@ -1,6 +1,6 @@
 import { open, readFile } from "node:fs/promises";
 import { headCommit } from "./git.js";
-import { overwriteNoteFile, serializeNote, todayISO, writeNewNoteFile } from "./notes.js";
+import { dayOf, nowISO, overwriteNoteFile, serializeNote, todayISO, writeNewNoteFile } from "./notes.js";
 import { findSecrets, scrubSecrets, ScrubError, type SecretFinding } from "./scrubber.js";
 import type { Note, NoteKind, NoteMeta, NoteStatus } from "./types.js";
 
@@ -19,7 +19,7 @@ export interface NewNote {
   related_files?: string[];
   commit?: string | null;
   status?: NoteStatus;
-  /** Defaults to today. */
+  /** Defaults to now (YYYY-MM-DDTHH:MM:SS). */
   date?: string;
 }
 
@@ -33,7 +33,8 @@ export interface SaveResult {
 export async function saveNote(repoRoot: string, input: NewNote): Promise<SaveResult> {
   if (!input.title.trim()) throw new Error("a note needs a title");
 
-  const date = input.date ?? todayISO();
+  // Date AND time, so two notes from the same day come back in the right order.
+  const date = input.date ?? nowISO();
   const meta: NoteMeta = {
     title: input.title,
     author: input.author,
@@ -41,7 +42,7 @@ export async function saveNote(repoRoot: string, input: NewNote): Promise<SaveRe
     status: input.status ?? "active",
     related_files: input.related_files ?? [],
     commit: input.commit ?? null,
-    last_confirmed: date,
+    last_confirmed: dayOf(date),
   };
 
   const clean = await scrubNote(meta, input.body);

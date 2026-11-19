@@ -124,6 +124,7 @@ export function describeReason(r: StaleReason): string {
 
 /** Whole days from one YYYY-MM-DD date to another. */
 export function daysBetween(from: string, to: string): number {
-  const ms = Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`);
+  // Only the day part counts, even if a time is included.
+  const ms = Date.parse(`${to.slice(0, 10)}T00:00:00Z`) - Date.parse(`${from.slice(0, 10)}T00:00:00Z`);
   return Math.round(ms / 86_400_000);
 }

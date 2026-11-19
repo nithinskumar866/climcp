@@ -89,6 +89,13 @@ describe("serialize and parse", () => {
     });
   });
 
+  it("accepts a date with a time, and still reads old date-only notes", () => {
+    const timed = parseNote("---\ntitle: Hi\ndate: 2026-11-19T14:35:02\n---\nbody").meta;
+    expect(timed.date).toBe("2026-11-19T14:35:02");
+    expect(timed.last_confirmed).toBe("2026-11-19");
+    expect(parseNote("---\ntitle: Hi\ndate: 2026-11-19\n---\nbody").meta.date).toBe("2026-11-19");
+  });
+
   it("works with Windows line endings", () => {
     const { meta } = parseNote("---\r\ntitle: Hi\r\ndate: 2026-11-19\r\n---\r\nbody");
     expect(meta.title).toBe("Hi");

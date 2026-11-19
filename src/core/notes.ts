@@ -16,18 +16,29 @@ import { NOTE_STATUSES, type Note, type NoteKind, type NoteMeta } from "./types.
 //   ...
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** `date` may also carry a time (2026-11-19T14:35:02), so notes from the same day sort correctly. */
+const DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/;
 
 /** Thrown when a note file is broken, with a message a human can act on. */
 export class NoteFormatError extends Error {}
 
 // ---------- small helpers ----------
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 /** Today's date in the user's own time zone, as YYYY-MM-DD. */
 export function todayISO(now: Date = new Date()): string {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/** Now, in the user's own time zone, as YYYY-MM-DDTHH:MM:SS (used as a new note's `date`). */
+export function nowISO(now: Date = new Date()): string {
+  return `${todayISO(now)}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
+/** Just the day part of a note date: "2026-11-19T14:35:02" -> "2026-11-19". */
+export function dayOf(date: string): string {
+  return date.slice(0, 10);
 }
 
 /** "Payment Webhook: retries!" -> "payment-webhook-retries" (safe to use in a file name). */
@@ -85,8 +96,8 @@ function validateMeta(raw: unknown): NoteMeta {
   if (typeof r.title !== "string" || r.title.trim() === "") {
     throw new NoteFormatError("'title' is missing");
   }
-  if (typeof r.date !== "string" || !DATE_PATTERN.test(r.date)) {
-    throw new NoteFormatError("'date' must look like 2026-11-19");
+  if (typeof r.date !== "string" || !DATE_TIME_PATTERN.test(r.date)) {
+    throw new NoteFormatError("'date' must look like 2026-11-19 or 2026-11-19T14:35:02");
   }
   const status = r.status ?? "active";
   if (!NOTE_STATUSES.includes(status as never)) {
@@ -100,7 +111,7 @@ function validateMeta(raw: unknown): NoteMeta {
   if (commit !== null && typeof commit !== "string") {
     throw new NoteFormatError("'commit' must be a commit hash or null");
   }
-  const lastConfirmed = r.last_confirmed ?? r.date;
+  const lastConfirmed = r.last_confirmed ?? dayOf(r.date);
   if (typeof lastConfirmed !== "string" || !DATE_PATTERN.test(lastConfirmed)) {
     throw new NoteFormatError("'last_confirmed' must look like 2026-11-19");
   }
@@ -133,7 +144,7 @@ export async function writeNewNoteFile(
   const dir = kindDir(repoRoot, kind);
   await mkdir(dir, { recursive: true });
 
-  const base = `${meta.date}-${slugify(meta.title)}`;
+  const base = `${dayOf(meta.date)}-${slugify(meta.title)}`;
   const text = serializeNote(meta, body);
 
   // If the name is taken, try -2, -3, ...  The "wx" flag means
@@ -211,6 +222,7 @@ export async function listNotes(
   }
 
   // Newest date first; on the same day, the later file name first.
+  // Dates with a time sort exactly ("2026-11-19T14:35:02" is after "2026-11-19T09:10:00").
   notes.sort((a, b) => b.meta.date.localeCompare(a.meta.date) || b.fileName.localeCompare(a.fileName));
   return { notes, broken };
 }

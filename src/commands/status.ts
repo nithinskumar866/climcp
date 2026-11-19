@@ -53,7 +53,7 @@ export function formatStatus(r: StatusReport): string {
     out.push("No active handoff yet. Run `contextbaton save` at the end of your session.");
   } else {
     const { note } = r.latest;
-    out.push(`Latest handoff: "${note.meta.title}"`, `  ${note.meta.author}, ${note.meta.date}  ·  ${rel(note)}`);
+    out.push(`Latest handoff: "${note.meta.title}"`, `  ${note.meta.author}, ${note.meta.date.replace("T", " ")}  ·  ${rel(note)}`);
     if (r.latest.outdated) {
       out.push("  ! POSSIBLY OUTDATED, check it against the code before trusting it:");
       for (const reason of r.latest.reasons) out.push(`      - ${describeReason(reason)}`);

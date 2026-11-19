@@ -121,6 +121,20 @@ describe("helpers", () => {
     expect(getSection(body, "No such section")).toBe("");
   });
 
+  it("BUG FOUND IN LIVE TEST: two notes on the same day come back newest first, whatever their names", async () => {
+    // File names sort the other way round: "practice-..." > "claude-...".
+    await handoff("Practice greeting feature", { date: "2026-11-19T09:00:00" });
+    await handoff("Claude code test", { date: "2026-11-19T10:30:00" });
+    expect((await latestActiveHandoff(repo.root))?.meta.title).toBe("Claude code test");
+  });
+
+  it("new notes get the time as well as the date", async () => {
+    const { note } = await saveNote(repo.root, { kind: "handoff", title: "Timed", author: "a", body: "x" });
+    expect(note.meta.date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+    expect(note.meta.last_confirmed).toBe(note.meta.date.slice(0, 10));
+    expect(note.fileName).toMatch(/^\d{4}-\d{2}-\d{2}-timed\.md$/);
+  });
+
   it("latestActiveHandoff is null when every handoff is done", async () => {
     await handoff("Done", { status: "done" });
     expect(await latestActiveHandoff(repo.root)).toBeNull();

@@ -13,7 +13,7 @@ export const NOTE_STATUSES: readonly NoteStatus[] = ["active", "done", "outdated
 export interface NoteMeta {
   title: string;
   author: string;
-  /** The date the note was written, as YYYY-MM-DD. */
+  /** When the note was written: YYYY-MM-DDTHH:MM:SS (older notes may have only YYYY-MM-DD). */
   date: string;
   status: NoteStatus;
   /** Files this note talks about. Used later to tell whether the note is outdated. */

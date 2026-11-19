@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, open, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import YAML from "yaml";
 import { kindDir } from "./paths.js";
@@ -149,6 +149,22 @@ export async function writeNewNoteFile(
     }
   }
   throw new Error(`too many notes named ${base}`);
+}
+
+/**
+ * Replaces the content of an EXISTING note file (e.g. after confirming it or changing its status).
+ *
+ * SAFETY: like writeNewNoteFile, this does NOT remove secrets. Only store.ts should call it.
+ */
+export async function overwriteNoteFile(note: Note): Promise<void> {
+  // "r+" = open an existing file for writing; fails if it doesn't exist, so it never creates a stray file.
+  const handle = await open(note.path, "r+");
+  try {
+    await handle.truncate(0);
+    await handle.writeFile(serializeNote(note.meta, note.body), "utf8");
+  } finally {
+    await handle.close();
+  }
 }
 
 /** Loads one note file. */

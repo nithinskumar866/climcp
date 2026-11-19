@@ -20,7 +20,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "commander": "^15.1.0"
+    "commander": "^15.1.0",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

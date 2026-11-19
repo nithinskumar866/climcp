@@ -85,8 +85,13 @@ program
   .option("--root <folder>", "the project folder (default: the current folder)")
   .action(async (flags: { root?: string }) => {
     // Nothing may be printed to stdout here: it carries the messages to the AI app.
-    const root = await findRepoRoot(flags.root ?? process.cwd());
-    if (!root) throw new Error(`${flags.root ?? process.cwd()} is not inside a git repository.`);
+    let root = flags.root ? await findRepoRoot(flags.root).catch(() => null) : null;
+    if (flags.root && !root) {
+      // e.g. an editor that didn't fill in ${workspaceFolder}: fall back to the current folder.
+      console.error(`contextbaton: --root "${flags.root}" is not a git repository; using the current folder instead.`);
+    }
+    root ??= await findRepoRoot(process.cwd());
+    if (!root) throw new Error(`${process.cwd()} is not inside a git repository.`);
     await startMcpServer(root);
   });
 

@@ -2,6 +2,20 @@
   "name": "contextbaton",
   "version": "0.1.0",
   "description": "Safe, local-first handoff notes for developers and their AI assistants.",
+  "keywords": [
+    "handoff",
+    "mcp",
+    "ai",
+    "claude-code",
+    "cursor",
+    "context",
+    "secrets",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nithinskumar866/climcp.git"
+  },
   "type": "module",
   "bin": {
     "contextbaton": "dist/cli.js"
@@ -11,6 +25,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest"

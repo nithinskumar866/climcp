@@ -153,7 +153,10 @@ export function mcpInstructions(): string {
   Cursor (create .cursor/mcp.json):
     {
       "mcpServers": {
-        "contextbaton": { "command": "npx", "args": ["-y", "contextbaton", "mcp"] }
+        "contextbaton": {
+          "command": "npx",
+          "args": ["-y", "contextbaton", "mcp", "--root", "\${workspaceFolder}"]
+        }
       }
     }`;
 }

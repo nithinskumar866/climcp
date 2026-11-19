@@ -123,7 +123,7 @@ export function formatCheckReport(r: CheckReport, opts: { hook?: boolean } = {})
       out.push(`  ! ${relative(r.root, f.note.path).replace(/\\/g, "/")}  "${f.note.meta.title}"`);
       for (const reason of f.reasons) out.push(`      - ${describeReason(reason)}`);
     }
-    out.push("  If a note is still true, confirm it (your AI assistant can use the confirm_note tool).", "");
+    out.push("  Still true? Run `contextbaton confirm <file name>`.", "");
   }
   if (r.broken.length > 0) {
     out.push("Note files that can't be read:");

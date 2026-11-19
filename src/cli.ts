@@ -7,6 +7,7 @@ import { createInterface } from "node:readline/promises";
 import { formatInitReport, runInit } from "./commands/init.js";
 import { formatSaveResult, formatSnapshot, runSave } from "./commands/save.js";
 import { exitCodeFor, formatCheckReport, runCheck } from "./commands/check.js";
+import { formatConfirm, formatStatus, runConfirm, runStatus } from "./commands/status.js";
 
 const program = new Command();
 
@@ -61,7 +62,22 @@ program
     process.exitCode = exitCodeFor(report);
   });
 
-// More commands (status, mcp) will be added here in later steps.
+program
+  .command("status")
+  .description("show the latest handoff and any notes that may be outdated")
+  .action(async () => {
+    console.log(formatStatus(await runStatus(process.cwd())));
+  });
+
+program
+  .command("confirm")
+  .description("mark a note as still true (resets its outdated check)")
+  .argument("<note>", "the note's file name, path, or the start of its file name")
+  .action(async (ref: string) => {
+    console.log(formatConfirm(await runConfirm(process.cwd(), ref)));
+  });
+
+// The `mcp` command will be added here in Step 10.
 
 // Run the command. Expected problems (like "not a git repository") are shown
 // as a short message instead of a scary stack trace.

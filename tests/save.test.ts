@@ -51,7 +51,7 @@ describe("contextbaton save", () => {
     expect(saved.body).toContain("## What's done\n\nAdded retry with backoff");
     expect(saved.body).toContain("## Next step\n\nTest duplicate events");
     expect(saved.body).toContain("- `src/webhook.ts` (modified)");
-    expect(saved.body).toContain("Branch: `feature/payments`");
+    expect(saved.body).toMatch(/## Current state\n\nGit state when this note was saved \(\d{4}-\d{2}-\d{2}\):\n- Branch: `feature\/payments`/);
     expect(saved.body).toContain("add webhook"); // recent commit
     expect(saved.body).toContain("## Risks and warnings\n\n_(not filled in)_"); // skipped
   });

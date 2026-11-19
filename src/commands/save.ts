@@ -12,6 +12,7 @@ import {
   type WorkingChange,
 } from "../core/git.js";
 import { CONTEXT_DIR } from "../core/paths.js";
+import { todayISO } from "../core/notes.js";
 import { saveNote, type SaveResult } from "../core/store.js";
 import { handoffBody } from "../core/templates.js";
 
@@ -112,9 +113,13 @@ export function filesChangedText(git: GitSnapshot): string {
     : "No uncommitted changes.";
 }
 
-/** The "Current state" section, written from git. (Also used by the MCP write_handoff tool.) */
-export function gitStateText(git: GitSnapshot): string {
+/**
+ * The "Current state" section, written from git. (Also used by the MCP write_handoff tool.)
+ * It's labelled as a snapshot, so nobody (human or AI) mistakes it for the state of the code today.
+ */
+export function gitStateText(git: GitSnapshot, savedOn: string = todayISO()): string {
   const state = [
+    `Git state when this note was saved (${savedOn}):`,
     `- Branch: \`${git.branch ?? "(detached)"}\``,
     `- Latest commit: ${git.head ? `\`${git.head}\`${git.commits[0] ? ` ${git.commits[0].subject}` : ""}` : "none yet"}`,
     `- Uncommitted files: ${git.changes.length}`,

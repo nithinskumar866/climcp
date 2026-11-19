@@ -6,6 +6,7 @@ import { getVersion } from "./version.js";
 import { createInterface } from "node:readline/promises";
 import { formatInitReport, runInit } from "./commands/init.js";
 import { formatSaveResult, formatSnapshot, runSave } from "./commands/save.js";
+import { exitCodeFor, formatCheckReport, runCheck } from "./commands/check.js";
 
 const program = new Command();
 
@@ -46,7 +47,21 @@ program
     }
   });
 
-// More commands (check, status, mcp) will be added here in later steps.
+program
+  .command("check")
+  .description("remove secrets from notes and list notes that may be outdated")
+  .option("--hook", "pre-commit mode: also check the staged copies (used by the git hook)")
+  .action(async (flags: { hook?: boolean }) => {
+    const report = await runCheck(process.cwd(), { hook: flags.hook });
+    const text = formatCheckReport(report, { hook: flags.hook });
+    // In hook mode, only speak up when there's something to say.
+    if (!flags.hook || report.secrets.length + report.stagedSecrets.length + report.outdated.length > 0) {
+      (exitCodeFor(report) === 1 ? console.error : console.log)(text);
+    }
+    process.exitCode = exitCodeFor(report);
+  });
+
+// More commands (status, mcp) will be added here in later steps.
 
 // Run the command. Expected problems (like "not a git repository") are shown
 // as a short message instead of a scary stack trace.

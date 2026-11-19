@@ -1,5 +1,6 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { configPath, defaultConfigText } from "../core/config.js";
 import { findRepoRoot, hooksDir, isIgnored } from "../core/git.js";
 import { CONTEXT_DIR, contextDir, kindDir } from "../core/paths.js";
 
@@ -36,7 +37,11 @@ Handoff notes and decisions for this project, managed by [contextbaton](https://
 - \`decisions/\`: important decisions and why they were made.
 
 Every note is scanned for secrets before it is saved. Notes can go out of date:
-run \`npx contextbaton status\` to see which ones need checking.
+run \`npx contextbaton check\` to see which ones need checking.
+
+\`config.json\` sets when a note counts as possibly outdated: more than
+\`maxChangedLines\` changed lines in its related files, or not confirmed for
+more than \`maxDaysUnconfirmed\` days.
 `;
 
 async function setUpContextDir(root: string): Promise<PartResult> {
@@ -47,6 +52,8 @@ async function setUpContextDir(root: string): Promise<PartResult> {
     created = (await writeIfMissing(join(dir, ".gitkeep"), "")) || created;
   }
   created = (await writeIfMissing(join(contextDir(root), "README.md"), CONTEXT_README)) || created;
+  // The settings file, with the default limits, so it's easy to see what can be changed.
+  created = (await writeIfMissing(configPath(root), defaultConfigText())) || created;
   return created ? "created" : "unchanged";
 }
 

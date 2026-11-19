@@ -33,6 +33,9 @@ describe("contextbaton init in a fresh repo", () => {
     expect(existsSync(join(repo.root, ".context", "handoffs"))).toBe(true);
     expect(existsSync(join(repo.root, ".context", "decisions"))).toBe(true);
     expect(await read(".context/README.md")).toContain("Handoff notes");
+    expect(JSON.parse(await read(".context/config.json"))).toEqual({
+      outdated: { maxChangedLines: 50, maxDaysUnconfirmed: 90 },
+    });
 
     const agents = await read("AGENTS.md");
     expect(agents).toContain(AGENTS_START);

@@ -1,3 +1,4 @@
+import { open, readFile } from "node:fs/promises";
 import { headCommit } from "./git.js";
 import { overwriteNoteFile, serializeNote, todayISO, writeNewNoteFile } from "./notes.js";
 import { findSecrets, scrubSecrets, ScrubError, type SecretFinding } from "./scrubber.js";
@@ -72,6 +73,27 @@ export async function confirmNote(root: string, note: Note, today: string = toda
   return updateNote(note, {
     meta: { last_confirmed: today, commit: head ?? note.meta.commit, status: "active" },
   });
+}
+
+/**
+ * For a BROKEN note file (its frontmatter can't be read, so we can't clean it field by field):
+ * removes secrets from the raw text. Returns what was removed (empty = file untouched).
+ */
+export async function scrubRawNoteFile(path: string): Promise<SecretFinding[]> {
+  const original = await readFile(path, "utf8");
+  const { text, findings } = await scrubSecrets(original);
+  if (findings.length > 0) {
+    // Open the existing file, empty it, then write. (Writing with "r+" alone would NOT
+    // shorten the file: the end of a long secret could be left behind.)
+    const handle = await open(path, "r+");
+    try {
+      await handle.truncate(0);
+      await handle.writeFile(text, "utf8");
+    } finally {
+      await handle.close();
+    }
+  }
+  return findings;
 }
 
 // ---------- the scrubbing ----------

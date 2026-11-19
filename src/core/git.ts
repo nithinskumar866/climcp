@@ -147,6 +147,19 @@ export async function filesInCommit(root: string, commit = "HEAD"): Promise<stri
   return out ? out.split("\0").filter(Boolean) : [];
 }
 
+// ---------- the staging area (what the next commit will contain) ----------
+
+/** Files that are staged (git add'ed) under `pathspec`, not counting deletions. */
+export async function stagedFiles(root: string, pathspec: string): Promise<string[]> {
+  const out = await git(root, ["diff", "--cached", "--name-only", "--diff-filter=d", "-z", "--", pathspec]);
+  return out.split("\0").filter(Boolean);
+}
+
+/** The staged copy of a file: exactly what will be committed (may differ from the file on disk). */
+export async function stagedContent(root: string, path: string): Promise<string> {
+  return git(root, ["show", `:${path}`]);
+}
+
 // ---------- how much changed (used to find outdated notes) ----------
 
 /** The short hash of the last commit that changed `path`, or null if it was never committed. */

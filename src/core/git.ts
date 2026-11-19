@@ -59,6 +59,21 @@ export async function commitExists(root: string, commit: string): Promise<boolea
   return (await gitOrNull(root, ["cat-file", "-e", `${commit}^{commit}`])) !== null;
 }
 
+/**
+ * The folder where git looks for hooks. Usually <repo>/.git/hooks, but a project
+ * can move it (core.hooksPath, used by tools like husky), so we ask git.
+ */
+export async function hooksDir(root: string): Promise<string> {
+  const out = (await git(root, ["rev-parse", "--path-format=absolute", "--git-path", "hooks"])).trim();
+  return out;
+}
+
+/** true if git would ignore this path (because of .gitignore). */
+export async function isIgnored(root: string, path: string): Promise<boolean> {
+  // check-ignore prints the path and exits 0 if ignored; exits 1 if not.
+  return (await gitOrNull(root, ["check-ignore", "-q", path])) !== null;
+}
+
 /** Your name from git config (used as the note's author). */
 export async function gitUserName(root: string): Promise<string | null> {
   const out = await gitOrNull(root, ["config", "user.name"]);

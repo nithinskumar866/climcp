@@ -140,6 +140,13 @@ export async function recentCommits(root: string, count = 5): Promise<CommitInfo
     });
 }
 
+/** Files touched by one commit (default: the latest). Empty if there are no commits yet. */
+export async function filesInCommit(root: string, commit = "HEAD"): Promise<string[]> {
+  // --root makes this also work for the very first commit of a repo.
+  const out = await gitOrNull(root, ["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", "-z", commit]);
+  return out ? out.split("\0").filter(Boolean) : [];
+}
+
 // ---------- how much changed (used to find outdated notes) ----------
 
 export interface LineChanges {

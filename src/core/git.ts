@@ -149,6 +149,18 @@ export async function filesInCommit(root: string, commit = "HEAD"): Promise<stri
 
 // ---------- how much changed (used to find outdated notes) ----------
 
+/** The short hash of the last commit that changed `path`, or null if it was never committed. */
+export async function lastCommitTouching(root: string, path: string): Promise<string | null> {
+  const out = await gitOrNull(root, ["log", "-1", "--format=%h", "--", path]);
+  return out?.trim() || null;
+}
+
+/** true if `path` has changes that aren't committed yet (edited, staged or brand new). */
+export async function hasUncommittedChanges(root: string, path: string): Promise<boolean> {
+  const out = await git(root, ["status", "--porcelain", "-z", "--untracked-files=all", "--", path]);
+  return out.length > 0;
+}
+
 export interface LineChanges {
   added: number;
   removed: number;

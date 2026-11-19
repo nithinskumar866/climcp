@@ -1,3 +1,4 @@
+import { headCommit } from "./git.js";
 import { overwriteNoteFile, serializeNote, todayISO, writeNewNoteFile } from "./notes.js";
 import { findSecrets, scrubSecrets, ScrubError, type SecretFinding } from "./scrubber.js";
 import type { Note, NoteKind, NoteMeta, NoteStatus } from "./types.js";
@@ -59,6 +60,18 @@ export async function updateNote(note: Note, changes: { meta?: Partial<NoteMeta>
   const updated: Note = { ...note, meta: clean.meta, body: clean.body };
   await overwriteNoteFile(updated);
   return { note: updated, redactions: clean.redactions };
+}
+
+/**
+ * Marks a note as "still true": sets last_confirmed to today, moves its commit to
+ * the current one, and makes it active again. Once this change is committed,
+ * the outdated check starts counting from here.
+ */
+export async function confirmNote(root: string, note: Note, today: string = todayISO()): Promise<SaveResult> {
+  const head = await headCommit(root);
+  return updateNote(note, {
+    meta: { last_confirmed: today, commit: head ?? note.meta.commit, status: "active" },
+  });
 }
 
 // ---------- the scrubbing ----------
